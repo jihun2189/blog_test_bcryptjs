@@ -1,0 +1,150 @@
+<h1>{{title}}</h1>
+{{#with post}} <!-- post 객체를 쉽게 사용하도록 with로 감싸기 -->
+<h2 class="text -xl">{{title}}</h2> <!-- 게시글의 제목 -->
+<div>
+    작성자 : <b>{{writer}}</b> <!-- 작성자 이름-->
+</div>
+<div>
+    조회수 : {{hits}} | 작성일시 : {{dateString createdDt}} <!-- 조회수와 작성일시 -->
+    <button onclick="modifyPost()">수정</button>
+    <button onclick="deletePost()">삭제</button>
+</div>
+
+<div>
+    <pre> {{content}}</pre> <!-- 본문 표시 영역 -->
+</div>
+
+<section>
+    <div>
+        <h3>{{lengthOfList comments}}개의 댓글이 있습니다.</h3> <!-- 댓글 개수 표시-->
+    </div>
+
+    <form method="post" action="/write-comment"> <!-- 댓글 작성 폼 -->
+        <input type="hidden" name="id" value="{{_id}}" />
+        <div>
+            <div>
+                <input type="text" name="name" placeholder="이름" /> <!-- 작성자 입력란 -->
+                <input type="password" name="password" placeholder="비밀번호" /> <!-- 비밀번호 입력란 -->
+            </div>
+            <div>
+                <!-- 댓글 입력란 -->
+                <textarea name="comment" cols="40" rows="3" placeholder="댓글을 입력해주세요."></textarea>
+                <!-- 댓글 전송 버튼-->
+                <br /><br /><button> 댓글 쓰기</button> <!-- 댓글 쓰기 버튼 -->
+            </div>
+        </div>
+    </form>
+</section>
+<!-- 댓글 데이터가 배열 형태로 제공되기 때문. 배열에 포함된 각 댓글을 순회하면서 템플릿 내부의 코드를 반복해서
+                             생성하고, 각 댓글의 정보를 해당 위치에 동적으로 삽입하기 위해 each 구문을 사용 -->
+<section>
+    <!-- 댓글 표시 영역 -->
+    {{#each comments}}
+    <div>
+        <div>
+            작성자 : <b>{{name}}</b>
+        </div>
+        <div>
+            작성 일시 : {{dateString createdDt}}
+            <button onclick="deleteComment('{{idx}}')">삭제</button> <!-- 삭제 버튼 -->
+        </div>
+    </div>
+    <div>
+        <pre>{{comment}}</pre>
+    </div>
+    {{/each}}
+</section>
+{{/with}}
+<footer>
+    <div>
+        <a href="/">목록으로</a> <!-- 목록으로 가는 링크 -->
+    </div>
+</footer>
+
+<script>
+    const postOption = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    }
+    async function modifyPost() {
+        const password = prompt("패스워드를 입력해주세요");
+        //프롬프트에서 취소를 누른 경우 처리
+        if (!password) {
+            return;
+        }
+        // check-password API 실행
+        const result = await fetch("/check-password", {
+            ...postOption,
+            body: JSON.stringify({ id: "{{post._id}}", password })
+        });
+
+        //json 함수를 실행하는 경우도 await를 해줘야 함
+        const data = await result.json();
+
+        //패스워드가  맞는 경우 수정페이지로 이동
+        if (data.isExist) {
+            document.location = "/modify/{{post._id}}"
+        }
+        else {
+            alert("패스워드가 올바르지 않습니다.");
+        }
+    }
+
+    const deleteOption = {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    }
+
+    async function deletePost() {
+        //프롬프트로 값 입력받기
+        const password = prompt("삭제하려면 패스워드를 입력해주세요.");
+        // 프롬프트에서 취소를 누른 경우 처리
+        if (!password) {
+            return;
+        }
+        // fetch API를 사용해 delete API 호출
+        const result = await fetch("/delete", {
+            ...deleteOption,// ...은 전개 연산자 : 배열이나 객체를 펼쳐서 개별 요소로 분리하거나 병합할 때 사용
+            body: JSON.stringify({ id: "{{post._id}}", password }) //JSON.stringify() 함수는 JavaScript 객체나 배열을 JSON 문자열로 변환하는 메서드
+        });
+
+        //delete API의 결과에 따라 다른 메시지 출력
+        const data = await result.json();
+        if (!data.isSuccess) {
+            alert("게시글 삭제에 실패했습니다. 패스워드를 확인해주세요.");
+            return;
+        }
+
+        alert("게시글 삭제성공!");
+        document.location = "/";
+    }
+
+    async function deleteComment(idx) {
+        const password = prompt("삭제하려면 패스워드를 입력해주세요");
+        // 프롬프트에서 취소를 누른 경우 처리
+        if(!password) {
+            return;
+        }
+
+        // /delete-comment API 실행
+        const result = await fetch("/delete-comment", {
+            ...deleteOption,
+            body : JSON.stringify({id : "{{post._id}}", idx, password})
+        });
+
+        //댓글 삭제 실패 시 메시지 띄우고 함수 실행 종료
+        const data = await result.json();
+        if(!data.isSuccess) {
+            alert("댓글 삭제에 실패했습니다. 패스워드를 확인해주세요.");
+            return;
+        }
+
+        // 성공 시 메시지를 띄우고 화면 리프레시
+        alert("댓글 삭제성공!");
+        document.location.reload();
+    }
+</script>

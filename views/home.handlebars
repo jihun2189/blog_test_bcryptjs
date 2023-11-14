@@ -1,0 +1,63 @@
+<h1>{{title}}</h1> <!--handlebar는 랜더링시 {{변수명}} 사용함 -->
+
+<!-- 검색어 영영-->
+<input type = "text" name = "search" id = "search" value="{{search}}" size="60"
+placeholder="검색어를 입력하세요." />
+<button onclick ="location.href=`/?search=${document.getElementById('search').value}`">검색</button>
+<!--버튼 클릭시 search 변수에 검색어 데이터를 담아서 서버로 보냄 -->
+<br />
+
+<!-- 글쓰기 페이지 이동 링크 -->
+<a href = "/write"> 글쓰기</a>
+<br />
+
+<!-- 글목록 -->
+<div>
+    <table>
+        <thead>
+            <tr>
+                <th width = "50%">제목</th>
+                <th>작성자</th>
+                <th>조회수</th>
+                <th> 등록일</th>
+            </tr>
+        </thead> 
+        <tbody> <!-- 게시글 데이터 표시 -->
+         {{#each posts}} <!-- posts 배열의 각 요소를 반복해서 출력 -->
+            <tr>
+                <td><a href="/detail/{{_id}}">{{title}}</a></td> <!-- 상세페이지 링크 -->
+                <td>{{writer}}</td>
+                <td>{{hits}}</td>
+                <td>{{dateString createdDt}}</td> <!-- dateString 헬퍼 함수 사용-->
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>
+
+<div>
+     {{#with paginator}} <!-- with 내장 헬퍼 함수 사용 -->
+    <!-- @root 서버의 원본 참조 시 사용 -->
+    <a href="/?page=1&search={{@root.search}}">&lt;&lt;</a>
+    {{#if hasPrev}}
+    <a href="/?page={{prevPage}}&search={{@root.search}}">&lt;</a>
+    <!-- 1페이지 인 경우 이전 페이지가 없으므로 링크가 없음 -->
+    {{else}}
+    <a>&lt;</a>
+    {{/if}}
+    {{#each pageList}}
+    {{#if (eq . @root.paginator.page)}} <!-- eq 내장 헬퍼 함수 사용 -->
+    <a>{{.}}</a>
+    {{else}}
+    <a href="/?page={{.}}&search={{@root.search}}">{{.}}</a>
+    {{/if}}
+    {{/each}}
+    {{#if hasNext}}
+    <a href="/?page={{nextPage}}&search={{@root.search}}">&gt;</a>
+    <!-- 마지막 페이지 인 경우 이전 페이지가 없으므로 링크가 삭제 -->
+    {{else}}
+    <a>&gt;</a>
+    {{/if}}
+    <a href="/?page={{lastPage}}&search={{@root.search}}">&gt;&gt;</a>
+    {{/with}}
+</div>
