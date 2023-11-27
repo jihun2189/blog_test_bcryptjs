@@ -113,7 +113,7 @@ app.post("/modify/", async (req, res) => {
         writer,
         password,
         content,
-        createdDt: new Date().toISOString(),
+        updatedDt: new Date().toISOString(),
     };
     await postService.postHashingPassword(post);
     // 업데이트 결과

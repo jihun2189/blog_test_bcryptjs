@@ -45,10 +45,22 @@ const projectionOption = {
 }
 
 async function getDetailPost(collection, id){
-    // 몽고디비 collection의 findOneAndUpdate() 함수 사용
+    // 몽고디비 collection의 findOneAndUpdate() 함수 사용, ModifyResult객체 반환, lastErrorObject(업데이트된 문서와 갯수)와 ok(게시글 문서의 수정이 성공인지 실패인지 앎)와 value(게시글 데이터) 속성 있음
     // 게시글을 읽을 때마다 hits를 1 증가
     // 첫번째 인자인 id로 해당 데이터를 찾고, 두 번째 인자로 어떤 변화를 줄지 정하고, 세 번째로 옵션을 줌
-    return await collection.findOneAndUpdate({ _id : ObjectId(id)}, { $inc: {hits: 1} }, projectionOption); // $inc 는 필드의 값을 증가시킴
+    const result = await collection.findOneAndUpdate(
+        { _id: ObjectId(id) },
+        { $inc: { hits: 1 } }, // $inc 는 필드의 값을 증가시킴
+        projectionOption
+    );
+
+    if (result.ok !== 1) {
+        // 작업이 실패한 경우 예외 처리
+        throw new Error("게시물을 읽을 수 없습니다.");
+    }
+
+    // 작업이 성공한 경우 업데이트된 문서의 내용 반환
+    return result.value;
 }
 
 // id와 password로 게시글 가져오기, 글 수정하려고
